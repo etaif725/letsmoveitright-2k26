@@ -1,9 +1,4 @@
 import { useState } from "react";
-import {
-  buildContactEmailHtml,
-  buildContactEmailSubject,
-  buildContactEmailText,
-} from "@/lib/forms/emailTemplates";
 
 const INQUIRY_TYPES = [
   { value: "", label: "Select a reason for contacting us" },
@@ -90,24 +85,18 @@ export function ContactForm() {
     try {
       const typeLabel =
         INQUIRY_TYPES.find((t) => t.value === form.inquiryType)?.label ?? form.inquiryType;
-      const emailData = {
-        inquiryType: form.inquiryType,
-        typeLabel,
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.replace(/\D/g, ""),
-        orderNumber: form.orderNumber.trim() || undefined,
-        message: form.message.trim(),
-      };
 
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...emailData,
-          subject: buildContactEmailSubject(typeLabel, emailData.name),
-          html: buildContactEmailHtml(emailData),
-          text: buildContactEmailText(emailData),
+          inquiryType: form.inquiryType,
+          typeLabel,
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.replace(/\D/g, ""),
+          orderNumber: form.orderNumber.trim() || undefined,
+          message: form.message.trim(),
         }),
       });
 

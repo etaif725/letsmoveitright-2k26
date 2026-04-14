@@ -59,42 +59,28 @@ function parseResponse(raw: string): SubmitResult {
   return { ok: false, msg: msg || "Submission failed. Please try again." };
 }
 
-import {
-  buildQuoteEmailHtml,
-  buildQuoteEmailSubject,
-  buildQuoteEmailText,
-  type QuoteEmailData,
-} from "./emailTemplates";
-
 /**
  * Fire-and-forget email notification via the backend's /api/submit
- * endpoint. Sends a pre-built branded HTML email body so the
- * notification arrives fully designed. Never blocks the primary
- * lead-gateway submission or surfaces errors to the user.
+ * endpoint. The server builds the branded HTML email from the raw
+ * data. Never blocks the primary lead-gateway submission or
+ * surfaces errors to the user.
  */
 function sendEmailNotification(form: FormState): void {
-  const data: QuoteEmailData = {
-    name: form.fullName.trim(),
-    email: form.email.trim(),
-    phone: stripPhone(form.phone),
-    movingFrom:
-      form.pickupRaw.trim() ||
-      `${form.pickupCity}, ${form.pickupState} ${form.pickupZip}`.trim(),
-    movingTo:
-      form.destRaw.trim() ||
-      `${form.destCity}, ${form.destState} ${form.destZip}`.trim(),
-    moveDate: form.moveDate,
-    moveSize: form.moveSize,
-  };
-
   fetch("/api/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      ...data,
-      subject: buildQuoteEmailSubject(data.name),
-      html: buildQuoteEmailHtml(data),
-      text: buildQuoteEmailText(data),
+      name: form.fullName.trim(),
+      email: form.email.trim(),
+      phone: stripPhone(form.phone),
+      movingFrom:
+        form.pickupRaw.trim() ||
+        `${form.pickupCity}, ${form.pickupState} ${form.pickupZip}`.trim(),
+      movingTo:
+        form.destRaw.trim() ||
+        `${form.destCity}, ${form.destState} ${form.destZip}`.trim(),
+      moveDate: form.moveDate,
+      moveSize: form.moveSize,
     }),
   }).catch((err) => {
     console.error("Email notification error:", err);

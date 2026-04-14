@@ -6,7 +6,7 @@ const fs = require("fs");
 const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
-const sendEmail = require("./sendEmail.cjs");
+const { sendQuoteEmail, sendContactEmail } = require("./sendEmail.cjs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -125,20 +125,12 @@ app.post("/api/submit", submitLimiter, async (req, res) => {
     return res.status(400).json({ error: "Validation failed", details: errors });
   }
 
-  const { name, email, phone, movingFrom, movingTo, moveDate, moveSize, subject, html, text } = req.body;
+  const { name, email, phone, movingFrom, movingTo, moveDate, moveSize } = req.body;
 
-  const emailPayload = {
-    to: notificationEmails,
-    subject: subject || `New Moving Quote Request — ${sanitize(name)}`,
-    html:
-      html ||
-      `<p>Name: ${sanitize(name)}</p><p>Email: ${sanitize(email)}</p><p>Phone: ${sanitize(phone)}</p><p>Moving from: ${sanitize(movingFrom)}</p><p>Moving to: ${sanitize(movingTo)}</p><p>Move Size: ${sanitize(moveSize)}</p><p>Moving Date: ${sanitize(moveDate)}</p>`,
-    text:
-      text ||
-      `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nFrom: ${movingFrom}\nTo: ${movingTo}\nSize: ${moveSize}\nDate: ${moveDate}`,
-  };
-
-  sendEmail(emailPayload).catch((err) => {
+  sendQuoteEmail(
+    { name, email, phone, movingFrom, movingTo, moveDate, moveSize },
+    notificationEmails,
+  ).catch((err) => {
     console.error("Error sending quote email:", err);
   });
 
@@ -159,20 +151,12 @@ app.post("/api/contact", submitLimiter, async (req, res) => {
     return res.status(400).json({ error: "Validation failed", details: errors });
   }
 
-  const { name, email, phone, message, subject, html, text } = req.body;
+  const { inquiryType, typeLabel, name, email, phone, orderNumber, message } = req.body;
 
-  const emailPayload = {
-    to: notificationEmails,
-    subject: subject || `Contact Form — ${sanitize(name)}`,
-    html:
-      html ||
-      `<p>Name: ${sanitize(name)}</p><p>Email: ${sanitize(email)}</p><p>Phone: ${sanitize(phone)}</p><p>Message: ${sanitize(message)}</p>`,
-    text:
-      text ||
-      `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nMessage: ${message}`,
-  };
-
-  sendEmail(emailPayload).catch((err) => {
+  sendContactEmail(
+    { inquiryType, typeLabel, name, email, phone, orderNumber, message },
+    notificationEmails,
+  ).catch((err) => {
     console.error("Error sending contact email:", err);
   });
 
