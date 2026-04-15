@@ -80,9 +80,21 @@ function sendEmailNotification(form: FormState): void {
       moveDate: form.moveDate,
       moveSize: form.moveSize,
     }),
-  }).catch((err) => {
-    console.error("Email notification error:", err);
-  });
+  })
+    .then(async (res) => {
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error(
+          "Email notification failed:",
+          res.status,
+          errBody?.error || res.statusText,
+          errBody?.detail || errBody?.details || "",
+        );
+      }
+    })
+    .catch((err) => {
+      console.error("Email notification error:", err);
+    });
 }
 
 /** POST the lead to the gateway and return a typed result. */

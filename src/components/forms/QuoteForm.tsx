@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 import type { FormState, FormErrors, StepNumber, ParsedPlace } from "@/types";
 import { formatPhone, todayISO } from "@/lib/forms/formatting";
@@ -37,6 +38,7 @@ function inputCls(hasError: boolean, isPlaceholder = false): string {
 }
 
 export function QuoteForm() {
+  const navigate = useNavigate();
   const placesLoaded = useGooglePlaces();
 
   const [step, setStep] = useState<StepNumber>(1);
@@ -112,38 +114,13 @@ export function QuoteForm() {
     setSubmitting(true);
     setResult(null);
     const res = await submitLead(form);
-    setResult(res);
     setSubmitting(false);
-  }
 
-  function resetForm() {
-    setResult(null);
-    setStep(1);
-    setForm(EMPTY_FORM);
-    setErrors({});
-  }
-
-  /* ── Success ── */
-
-  if (result?.ok) {
-    return (
-      <div className="p-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-600">
-          ✓
-        </div>
-        <h2 className="font-heading text-xl text-heading">Quote Requested!</h2>
-        <p className="mt-2 text-sm text-gray-500">
-          We'll be in touch shortly with your free moving quote.
-        </p>
-        <button
-          type="button"
-          onClick={resetForm}
-          className="mt-6 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-heading shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-[0.98]"
-        >
-          Submit Another
-        </button>
-      </div>
-    );
+    if (res.ok) {
+      navigate("/thank-you");
+      return;
+    }
+    setResult(res);
   }
 
   /* ── Form ── */

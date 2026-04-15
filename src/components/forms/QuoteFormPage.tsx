@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 import type { FormState, FormErrors, ParsedPlace } from "@/types";
 import { formatPhone, todayISO } from "@/lib/forms/formatting";
@@ -33,6 +34,7 @@ function validateAll(form: FormState): FormErrors {
 }
 
 export function QuoteFormPage() {
+  const navigate = useNavigate();
   const placesLoaded = useGooglePlaces();
 
   const [submitting, setSubmitting] = useState(false);
@@ -97,35 +99,13 @@ export function QuoteFormPage() {
     setSubmitting(true);
     setResult(null);
     const res = await submitLead(form);
-    setResult(res);
     setSubmitting(false);
-  }
 
-  if (result?.ok) {
-    return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-600">
-          ✓
-        </div>
-        <h3 className="font-heading text-xl text-heading">
-          Quote Requested!
-        </h3>
-        <p className="mt-2 text-body">
-          We'll be in touch shortly with your free moving quote.
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            setResult(null);
-            setForm(EMPTY_FORM);
-            setErrors({});
-          }}
-          className="mt-6 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-heading shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-[0.98]"
-        >
-          Submit Another Request
-        </button>
-      </div>
-    );
+    if (res.ok) {
+      navigate("/thank-you");
+      return;
+    }
+    setResult(res);
   }
 
   return (

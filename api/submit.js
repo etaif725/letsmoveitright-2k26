@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getRequestBody } from "./_parseBody.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@letsmoveit-right.com";
@@ -59,7 +60,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { name, email, phone, movingFrom, movingTo, moveDate, moveSize } = req.body || {};
+  if (!process.env.RESEND_API_KEY) {
+    console.error("submit: RESEND_API_KEY is not set");
+    return res.status(500).json({ error: "Email service not configured" });
+  }
+
+  if (!TO_EMAILS.length) {
+    console.error("submit: NOTIFICATIONS_EMAILS is empty — set it in Vercel env");
+    return res.status(500).json({ error: "No notification recipients configured" });
+  }
+
+  const body = await getRequestBody(req);
+  const { name, email, phone, movingFrom, movingTo, moveDate, moveSize } = body || {};
 
   const errors = [];
   if (!name || typeof name !== "string" || name.trim().length < 2) errors.push("Name is required");
@@ -98,11 +110,15 @@ export default async function handler(req, res) {
   if (BCC_EMAILS.length) payload.bcc = BCC_EMAILS;
 
   try {
-    const { error } = await resend.emails.send(payload);
+    const { data, error } = await resend.emails.send(payload);
     if (error) {
-      console.error("Resend error:", error);
-      return res.status(500).json({ error: "Email send failed" });
+      console.error("Resend error:", JSON.stringify(error));
+      return res.status(500).json({
+        error: "Email send failed",
+        detail: error.message || String(error),
+      });
     }
+    console.log("Resend quote email sent:", data?.id);
     return res.status(200).json({ message: "Form submitted successfully" });
   } catch (err) {
     console.error("Submit error:", err);

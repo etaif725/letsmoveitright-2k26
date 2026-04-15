@@ -15,6 +15,15 @@ const notificationEmails = (process.env.NOTIFICATIONS_EMAILS || "")
   .split(",")
   .filter(Boolean);
 
+if (!notificationEmails.length) {
+  console.warn(
+    "NOTIFICATIONS_EMAILS is empty — quote/contact notification emails will not be sent.",
+  );
+}
+if (!process.env.RESEND_API_KEY) {
+  console.warn("RESEND_API_KEY is not set — emails cannot be sent.");
+}
+
 // Trust the first proxy (AWS ALB / CloudFront / nginx) so rate
 // limiting keys off the real visitor IP, not the load balancer.
 app.set("trust proxy", 1);

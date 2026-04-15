@@ -15,6 +15,7 @@ const SubmitTicketPage = lazy(() => import("@/pages/SubmitTicketPage"));
 const GetFreeQuotePage = lazy(() => import("@/pages/GetFreeQuotePage"));
 const BlogPage = lazy(() => import("@/pages/BlogPage"));
 const BlogPostPage = lazy(() => import("@/pages/BlogPostPage"));
+const ThankYouPage = lazy(() => import("@/pages/ThankYouPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 function LoadingFallback() {
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="get-free-quote" element={<GetFreeQuotePage />} />
             <Route path="blog" element={<BlogPage />} />
             <Route path="blog/:slug" element={<BlogPostPage />} />
+            <Route path="thank-you" element={<ThankYouPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

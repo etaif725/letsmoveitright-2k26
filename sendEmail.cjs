@@ -148,6 +148,15 @@ function buildContactEmail(d) {
 // ── Send via Resend ──────────────────────────────────────────────
 
 async function sendQuoteEmail(data, toAddresses) {
+  if (!toAddresses || !toAddresses.length) {
+    console.error("sendQuoteEmail: no recipients — set NOTIFICATIONS_EMAILS in .env");
+    return;
+  }
+  if (!process.env.RESEND_API_KEY) {
+    console.error("sendQuoteEmail: RESEND_API_KEY is not set");
+    return;
+  }
+
   const email = buildQuoteEmail(data);
   const payload = {
     from: FROM_EMAIL,
@@ -165,6 +174,15 @@ async function sendQuoteEmail(data, toAddresses) {
 }
 
 async function sendContactEmail(data, toAddresses) {
+  if (!toAddresses || !toAddresses.length) {
+    console.error("sendContactEmail: no recipients — set NOTIFICATIONS_EMAILS in .env");
+    return;
+  }
+  if (!process.env.RESEND_API_KEY) {
+    console.error("sendContactEmail: RESEND_API_KEY is not set");
+    return;
+  }
+
   const email = buildContactEmail(data);
   const payload = {
     from: FROM_EMAIL,
