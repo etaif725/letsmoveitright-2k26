@@ -163,6 +163,33 @@ app.post("/api/contact", submitLimiter, async (req, res) => {
   res.status(200).json({ message: "Message sent successfully" });
 });
 
+// ─── API: Proxy to Granot lead gateway ───────────────────────────
+// The browser can't POST directly to lead.hellomoving.com (no CORS
+// headers). This route proxies the request server-side.
+
+const GRANOT_URL =
+  "https://lead.hellomoving.com/LEADSGWHTTP.lidgw?&API_ID=ED9BFDA45A67&MOVERREF=leads@number1moving.com";
+
+app.post("/api/submit-lead", submitLimiter, async (req, res) => {
+  try {
+    const response = await fetch(GRANOT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: req.body && typeof req.body === "object"
+        ? new URLSearchParams(
+            Object.entries(req.body).map(([k, v]) => [k, String(v)])
+          ).toString()
+        : "",
+    });
+    const text = await response.text();
+    res.set("Content-Type", "text/plain");
+    res.status(response.status).send(text);
+  } catch (err) {
+    console.error("Granot proxy error:", err);
+    res.status(502).json({ error: "Failed to reach lead gateway" });
+  }
+});
+
 // ─── Serve React build ──────────────────────────────────────────
 
 const distPath = path.join(__dirname, "dist");

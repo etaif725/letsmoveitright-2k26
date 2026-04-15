@@ -7,12 +7,10 @@
 import type { FormState, LeadPayload, SubmitResult } from "@/types";
 import { isoToMMDDYYYY, splitName, stripPhone } from "./formatting";
 
-// In dev Vite proxies this to lead.hellomoving.com (see vite.config.ts).
-// In production swap to your own backend proxy endpoint.
-const API_URL =
-  import.meta.env.MODE === "development"
-    ? "/api/submit-lead"
-    : "https://lead.hellomoving.com/LEADSGWHTTP.lidgw?&API_ID=ED9BFDA45A67&MOVERREF=leads@number1moving.com";
+// Always proxy through our Express server to avoid CORS issues.
+// In dev, Vite forwards /api/* to localhost:3000. In production,
+// Express serves both the SPA and the API routes.
+const API_URL = "/api/submit-lead";
 
 /** 101 = local (same state), 102 = long distance. */
 function detectServiceType(originState: string, destState: string): number {
