@@ -3,11 +3,38 @@ import { useNavigate } from "react-router-dom";
 import Seo from "@/components/ui/Seo";
 import { COMPANY } from "@/data/company";
 
+declare global {
+  interface Window {
+    dataLayer: Record<string, unknown>[];
+  }
+}
+
 const REDIRECT_SECONDS = 5;
+const GTM_ID = "GTM-N7RNQP22";
 
 export default function ThankYouPage() {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(REDIRECT_SECONDS);
+
+  // Google Tag Manager - inject script into head
+  useEffect(() => {
+    // Check if GTM script already exists to avoid duplicates
+    if (document.getElementById("gtm-script")) return;
+
+    // Initialize dataLayer
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      "gtm.start": new Date().getTime(),
+      event: "gtm.js",
+    });
+
+    // Create and inject GTM script
+    const script = document.createElement("script");
+    script.id = "gtm-script";
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`;
+    document.head.insertBefore(script, document.head.firstChild);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -31,14 +58,16 @@ export default function ThankYouPage() {
         canonical={`${COMPANY.domain}/thank-you`}
       />
 
-      {/* ── Conversion tracking pixels ──
-          Place any tracking scripts / pixels / noscript tags here.
-          They fire once when this page renders after a successful submission.
-
-          Examples:
-          <img src="https://tracker.example.com/pixel?event=lead" width="1" height="1" alt="" />
-          <script>gtag('event', 'conversion', { ... });</script>
-      */}
+      {/* Google Tag Manager (noscript) - for users with JS disabled */}
+      <noscript>
+        <iframe
+          src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+          height="0"
+          width="0"
+          style={{ display: "none", visibility: "hidden" }}
+          title="GTM"
+        />
+      </noscript>
 
       <section className="py-20">
         <div className="mx-auto max-w-xl px-4 text-center">
