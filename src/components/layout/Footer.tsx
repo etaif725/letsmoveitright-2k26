@@ -54,7 +54,7 @@ export default function Footer() {
                 <p className="mt-2 text-sm font-bold">{COMPANY.phone}</p>
               </a>
             </address>
-            <a
+            {/* <a
               href="https://www.facebook.com/letsmoveitright"
               target="_blank"
               rel="noopener noreferrer"
@@ -62,7 +62,7 @@ export default function Footer() {
               aria-label="Visit our Facebook page"
             >
               <FaFacebook size={24} />
-            </a>
+            </a> */}
             <div className="mt-5">
               <button
                 type="button"
