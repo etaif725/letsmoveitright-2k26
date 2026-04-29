@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FaFacebook } from "react-icons/fa";
+//import { FaFacebook } from "react-icons/fa";
 import { COMPANY } from "@/data/company";
 import { SERVICES } from "@/data/services";
 import { useQuoteModal } from "@/components/ui/QuoteModal";
