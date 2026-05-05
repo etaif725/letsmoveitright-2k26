@@ -1,5 +1,9 @@
 import { Resend } from "resend";
+import { createRequire } from "module";
 import { getRequestBody } from "./_parseBody.js";
+
+const require = createRequire(import.meta.url);
+const { isValidVisitorPhone, toE164 } = require("../lib/phoneShared.cjs");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@letsmoveit-right.com";
@@ -76,7 +80,8 @@ export default async function handler(req, res) {
   const errors = [];
   if (!name || typeof name !== "string" || name.trim().length < 2) errors.push("Name is required");
   if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Valid email required");
-  if (!phone || typeof phone !== "string" || phone.trim().length < 7) errors.push("Valid phone required");
+  if (!phone || typeof phone !== "string" || !isValidVisitorPhone(phone))
+    errors.push("Valid phone required");
   if (!movingFrom || typeof movingFrom !== "string" || movingFrom.trim().length < 2) errors.push("Moving from required");
   if (!movingTo || typeof movingTo !== "string" || movingTo.trim().length < 2) errors.push("Moving to required");
   if (!moveSize || typeof moveSize !== "string") errors.push("Move size required");
@@ -86,11 +91,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Validation failed", details: errors });
   }
 
+  const phoneNormalized = toE164(phone);
   const now = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
   const rows = [
     row("Name", name, { highlight: true }),
     row("Email", link(`mailto:${email}`, email), { raw: true }),
-    row("Phone", link(`tel:${phone}`, phone), { raw: true }),
+    row("Phone", link(`tel:${phoneNormalized}`, phoneNormalized), { raw: true }),
     row("Moving From", movingFrom),
     row("Moving To", movingTo),
     row("Move Size", moveSize),
@@ -104,7 +110,7 @@ export default async function handler(req, res) {
     replyTo: email,
     subject: `New Moving Quote Request — ${name}`,
     html: shell("New Moving Quote Request", rows),
-    text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nFrom: ${movingFrom}\nTo: ${movingTo}\nSize: ${moveSize}\nDate: ${moveDate}`,
+    text: `Name: ${name}\nEmail: ${email}\nPhone: ${phoneNormalized}\nFrom: ${movingFrom}\nTo: ${movingTo}\nSize: ${moveSize}\nDate: ${moveDate}`,
   };
   if (CC_EMAILS.length) payload.cc = CC_EMAILS;
   if (BCC_EMAILS.length) payload.bcc = BCC_EMAILS;

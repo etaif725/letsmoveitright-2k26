@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { FormState, FormErrors, StepNumber, ParsedPlace } from "@/types";
 import { formatPhone, todayISO } from "@/lib/forms/formatting";
 import { validateStep } from "@/lib/forms/validation";
 import { submitLead } from "@/lib/forms/api";
+import { getPhoneFieldError, isValidVisitorPhone } from "@/lib/phone";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
 import { usePlacesAutocomplete } from "@/hooks/usePlacesAutocomplete";
 import { Stepper } from "@/components/ui/Stepper";
@@ -48,15 +49,29 @@ export function QuoteForm() {
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [phoneBlurred, setPhoneBlurred] = useState(false);
 
   const pickupRef = useRef<HTMLInputElement>(null);
   const destRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (step !== 3) setPhoneBlurred(false);
+  }, [step]);
 
   const updateField =
     (field: keyof FormState) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       let value = e.target.value;
-      if (field === "phone") value = formatPhone(value);
+      if (field === "phone") {
+        value = formatPhone(value);
+        setForm((prev) => ({ ...prev, phone: value }));
+        setErrors((prev) => {
+          const next = { ...prev };
+          if (isValidVisitorPhone(value)) delete next.phone;
+          return next;
+        });
+        return;
+      }
       setForm((prev) => ({ ...prev, [field]: value }));
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     };
@@ -109,6 +124,7 @@ export function QuoteForm() {
   async function handleSubmit() {
     const stepErrors = validateStep(3, form);
     setErrors(stepErrors);
+    setPhoneBlurred(true);
     if (Object.keys(stepErrors).length > 0) return;
 
     setSubmitting(true);
@@ -122,6 +138,11 @@ export function QuoteForm() {
     }
     setResult(res);
   }
+
+  const phoneResolvedError =
+    step === 3 && (phoneBlurred || errors.phone !== undefined)
+      ? getPhoneFieldError(form.phone)
+      : undefined;
 
   /* ── Form ── */
 
@@ -220,14 +241,16 @@ export function QuoteForm() {
               autoComplete="email"
             />
           </Field>
-          <Field label="Phone Number" error={errors.phone}>
+          <Field label="Phone Number" error={phoneResolvedError}>
             <input
               type="tel"
-              className={inputCls(!!errors.phone)}
+              className={inputCls(!!phoneResolvedError)}
               placeholder="(555) 123-4567"
               value={form.phone}
               onChange={updateField("phone")}
+              onBlur={() => setPhoneBlurred(true)}
               autoComplete="tel"
+              aria-invalid={phoneResolvedError ? true : undefined}
             />
           </Field>
         </div>

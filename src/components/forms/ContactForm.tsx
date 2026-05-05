@@ -1,5 +1,12 @@
 import { useState } from "react";
 
+import {
+  formatPhoneInput,
+  getPhoneFieldError,
+  isValidVisitorPhone,
+  toE164,
+} from "@/lib/phone";
+
 const INQUIRY_TYPES = [
   { value: "", label: "Select a reason for contacting us" },
   { value: "new-customer", label: "I'm interested in moving services" },
@@ -36,18 +43,11 @@ function validate(form: FormData): FieldErrors {
   if (!form.name.trim()) errors.name = "Your name is required";
   if (!form.email.trim() || !EMAIL_RE.test(form.email))
     errors.email = "A valid email is required";
-  if (!form.phone.trim() || form.phone.replace(/\D/g, "").length < 10)
-    errors.phone = "A valid phone number is required";
+  const phoneErr = getPhoneFieldError(form.phone);
+  if (phoneErr) errors.phone = phoneErr;
   if (!form.message.trim() || form.message.trim().length < 10)
     errors.message = "Please describe how we can help (min 10 characters)";
   return errors;
-}
-
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
 const EMPTY: FormData = {
@@ -62,6 +62,7 @@ const EMPTY: FormData = {
 export function ContactForm() {
   const [form, setForm] = useState<FormData>(EMPTY);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [phoneBlurred, setPhoneBlurred] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{
     ok: boolean;
@@ -70,8 +71,23 @@ export function ContactForm() {
 
   function update<K extends keyof FormData>(field: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (field === "phone") {
+      setErrors((prev) => {
+        const next = { ...prev };
+        if (typeof value === "string" && isValidVisitorPhone(value)) {
+          delete next.phone;
+        }
+        return next;
+      });
+      return;
+    }
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
+
+  const phoneResolvedError =
+    phoneBlurred || errors.phone !== undefined
+      ? getPhoneFieldError(form.phone)
+      : undefined;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -94,7 +110,7 @@ export function ContactForm() {
           typeLabel,
           name: form.name.trim(),
           email: form.email.trim(),
-          phone: form.phone.replace(/\D/g, ""),
+          phone: toE164(form.phone)!,
           orderNumber: form.orderNumber.trim() || undefined,
           message: form.message.trim(),
         }),
@@ -106,6 +122,7 @@ export function ContactForm() {
           msg: "Your message has been sent. We'll get back to you shortly.",
         });
         setForm(EMPTY);
+        setPhoneBlurred(false);
       } else {
         const data = await res.json().catch(() => null);
         setResult({
@@ -190,14 +207,16 @@ export function ContactForm() {
 
       {/* Phone + Order number row */}
       <div className={`grid gap-5 ${showOrderField ? "sm:grid-cols-2" : ""}`}>
-        <FieldWrapper label="Phone Number" error={errors.phone}>
+        <FieldWrapper label="Phone Number" error={phoneResolvedError}>
           <input
             type="tel"
             value={form.phone}
-            onChange={(e) => update("phone", formatPhone(e.target.value))}
+            onChange={(e) => update("phone", formatPhoneInput(e.target.value))}
+            onBlur={() => setPhoneBlurred(true)}
             placeholder="(555) 123-4567"
             autoComplete="tel"
-            className={inputClass(!!errors.phone)}
+            aria-invalid={phoneResolvedError ? true : undefined}
+            className={inputClass(!!phoneResolvedError)}
           />
         </FieldWrapper>
         {showOrderField && (

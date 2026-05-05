@@ -5,7 +5,7 @@
  */
 
 import type { FormState, FormErrors, StepNumber } from "@/types";
-import { stripPhone } from "./formatting";
+import { getPhoneFieldError } from "@/lib/phone";
 
 const EMAIL_RE = /\S+@\S+\.\S+/;
 
@@ -33,9 +33,8 @@ function validateContact(form: FormState): FormErrors {
   if (!form.email.trim() || !EMAIL_RE.test(form.email)) {
     errors.email = "Enter a valid email";
   }
-  if (stripPhone(form.phone).length < 10) {
-    errors.phone = "Enter a valid phone number";
-  }
+  const phoneErr = getPhoneFieldError(form.phone);
+  if (phoneErr) errors.phone = phoneErr;
   return errors;
 }
 

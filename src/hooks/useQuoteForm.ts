@@ -3,11 +3,20 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { submitQuote } from "@/lib/api";
+import {
+  isValidVisitorPhone,
+  toE164,
+  PHONE_INVALID_MSG,
+  PHONE_REQUIRED_MSG,
+} from "@/lib/phone";
 
 export const quoteSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.email("Please enter a valid email"),
-  phone: z.string().min(7, "Please enter a valid phone number"),
+  phone: z
+    .string()
+    .min(1, PHONE_REQUIRED_MSG)
+    .refine(isValidVisitorPhone, PHONE_INVALID_MSG),
   movingFrom: z.string().min(2, "Moving from address is required"),
   movingTo: z.string().min(2, "Moving to address is required"),
   moveSize: z.string().min(1, "Please select a move size"),
@@ -36,7 +45,12 @@ export function useQuoteForm() {
   const onSubmit = async (data: QuoteFormValues) => {
     try {
       setSubmitError(null);
-      await submitQuote(data);
+      const phoneE164 = toE164(data.phone);
+      if (!phoneE164) {
+        setSubmitError(PHONE_INVALID_MSG);
+        return;
+      }
+      await submitQuote({ ...data, phone: phoneE164 });
       setSubmitted(true);
       form.reset();
     } catch {

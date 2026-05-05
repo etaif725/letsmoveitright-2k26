@@ -5,7 +5,8 @@
  */
 
 import type { FormState, LeadPayload, SubmitResult } from "@/types";
-import { isoToMMDDYYYY, splitName, stripPhone } from "./formatting";
+import { toE164, toLeadPhoneDigits } from "@/lib/phone";
+import { isoToMMDDYYYY, splitName } from "./formatting";
 
 // Always proxy through our Express server to avoid CORS issues.
 // In dev, Vite forwards /api/* to localhost:3000. In production,
@@ -34,7 +35,7 @@ export function buildPayload(form: FormState): LeadPayload {
     movedte: isoToMMDDYYYY(form.moveDate),
     movesize: form.moveSize,
     email: form.email.trim(),
-    phone1: stripPhone(form.phone),
+    phone1: toLeadPhoneDigits(form.phone) ?? "",
     consent: "1",
     label: "website-quote-form",
   };
@@ -70,7 +71,7 @@ function sendEmailNotification(form: FormState): void {
     body: JSON.stringify({
       name: form.fullName.trim(),
       email: form.email.trim(),
-      phone: stripPhone(form.phone),
+      phone: toE164(form.phone) ?? "",
       movingFrom:
         form.pickupRaw.trim() ||
         `${form.pickupCity}, ${form.pickupState} ${form.pickupZip}`.trim(),

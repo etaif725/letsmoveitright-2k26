@@ -1,5 +1,9 @@
 import { Resend } from "resend";
+import { createRequire } from "module";
 import { getRequestBody } from "./_parseBody.js";
+
+const require = createRequire(import.meta.url);
+const { isValidVisitorPhone, toE164 } = require("../lib/phoneShared.cjs");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@letsmoveit-right.com";
@@ -77,7 +81,8 @@ export default async function handler(req, res) {
   const errors = [];
   if (!name || typeof name !== "string" || name.trim().length < 2) errors.push("Name is required");
   if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Valid email required");
-  if (!phone || typeof phone !== "string" || phone.replace(/\D/g, "").length < 10) errors.push("Valid phone required");
+  if (!phone || typeof phone !== "string" || !isValidVisitorPhone(phone))
+    errors.push("Valid phone required");
   if (!message || typeof message !== "string" || message.trim().length < 10) errors.push("Message required (min 10 chars)");
 
   if (errors.length) {
@@ -85,18 +90,19 @@ export default async function handler(req, res) {
   }
 
   const label = typeLabel || inquiryType || "General";
+  const phoneNormalized = toE164(phone);
   const now = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
   const rows = [
     row("Inquiry Type", label, { highlight: true }),
     row("Name", name, { highlight: true }),
     row("Email", link(`mailto:${email}`, email), { raw: true }),
-    row("Phone", link(`tel:${phone}`, phone), { raw: true }),
+    row("Phone", link(`tel:${phoneNormalized}`, phoneNormalized), { raw: true }),
     ...(orderNumber ? [row("Order #", orderNumber)] : []),
     row("Message", message, { multiline: true }),
     row("Submitted", now, { last: true }),
   ].join("\n");
 
-  const lines = [`Type: ${label}`, `Name: ${name}`, `Email: ${email}`, `Phone: ${phone}`];
+  const lines = [`Type: ${label}`, `Name: ${name}`, `Email: ${email}`, `Phone: ${phoneNormalized}`];
   if (orderNumber) lines.push(`Order #: ${orderNumber}`);
   lines.push(`Message: ${message}`);
 

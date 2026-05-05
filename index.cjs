@@ -7,6 +7,7 @@ const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const { sendQuoteEmail, sendContactEmail } = require("./sendEmail.cjs");
+const { isValidVisitorPhone, toE164 } = require("./lib/phoneShared.cjs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -99,7 +100,7 @@ function validateQuote(body) {
     errors.push("Name is required (min 2 characters)");
   if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     errors.push("A valid email is required");
-  if (!phone || typeof phone !== "string" || phone.trim().length < 7)
+  if (!phone || typeof phone !== "string" || !isValidVisitorPhone(phone))
     errors.push("A valid phone number is required");
   if (!movingFrom || typeof movingFrom !== "string" || movingFrom.trim().length < 2)
     errors.push("Moving from address is required");
@@ -119,7 +120,7 @@ function validateContact(body) {
     errors.push("Name is required (min 2 characters)");
   if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     errors.push("A valid email is required");
-  if (!phone || typeof phone !== "string" || phone.replace(/\D/g, "").length < 10)
+  if (!phone || typeof phone !== "string" || !isValidVisitorPhone(phone))
     errors.push("A valid phone number is required");
   if (!message || typeof message !== "string" || message.trim().length < 10)
     errors.push("Message is required (min 10 characters)");
@@ -135,9 +136,10 @@ app.post("/api/submit", submitLimiter, async (req, res) => {
   }
 
   const { name, email, phone, movingFrom, movingTo, moveDate, moveSize } = req.body;
+  const phoneNormalized = toE164(phone);
 
   sendQuoteEmail(
-    { name, email, phone, movingFrom, movingTo, moveDate, moveSize },
+    { name, email, phone: phoneNormalized, movingFrom, movingTo, moveDate, moveSize },
     notificationEmails,
   ).catch((err) => {
     console.error("Error sending quote email:", err);
@@ -161,9 +163,18 @@ app.post("/api/contact", submitLimiter, async (req, res) => {
   }
 
   const { inquiryType, typeLabel, name, email, phone, orderNumber, message } = req.body;
+  const phoneNormalized = toE164(phone);
 
   sendContactEmail(
-    { inquiryType, typeLabel, name, email, phone, orderNumber, message },
+    {
+      inquiryType,
+      typeLabel,
+      name,
+      email,
+      phone: phoneNormalized,
+      orderNumber,
+      message,
+    },
     notificationEmails,
   ).catch((err) => {
     console.error("Error sending contact email:", err);

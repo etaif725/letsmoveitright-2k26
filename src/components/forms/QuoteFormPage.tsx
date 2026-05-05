@@ -5,6 +5,7 @@ import type { FormState, FormErrors, ParsedPlace } from "@/types";
 import { formatPhone, todayISO } from "@/lib/forms/formatting";
 import { validateStep } from "@/lib/forms/validation";
 import { submitLead } from "@/lib/forms/api";
+import { getPhoneFieldError, isValidVisitorPhone } from "@/lib/phone";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
 import { usePlacesAutocomplete } from "@/hooks/usePlacesAutocomplete";
 import { COMPANY } from "@/data/company";
@@ -43,6 +44,7 @@ export function QuoteFormPage() {
   );
   const [errors, setErrors] = useState<FormErrors>({});
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [phoneBlurred, setPhoneBlurred] = useState(false);
 
   const pickupRef = useRef<HTMLInputElement>(null);
   const destRef = useRef<HTMLInputElement>(null);
@@ -51,7 +53,16 @@ export function QuoteFormPage() {
     (field: keyof FormState) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       let value = e.target.value;
-      if (field === "phone") value = formatPhone(value);
+      if (field === "phone") {
+        value = formatPhone(value);
+        setForm((prev) => ({ ...prev, phone: value }));
+        setErrors((prev) => {
+          const next = { ...prev };
+          if (isValidVisitorPhone(value)) delete next.phone;
+          return next;
+        });
+        return;
+      }
       setForm((prev) => ({ ...prev, [field]: value }));
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     };
@@ -94,6 +105,7 @@ export function QuoteFormPage() {
     e.preventDefault();
     const fieldErrors = validateAll(form);
     setErrors(fieldErrors);
+    setPhoneBlurred(true);
     if (Object.keys(fieldErrors).length > 0) return;
 
     setSubmitting(true);
@@ -107,6 +119,11 @@ export function QuoteFormPage() {
     }
     setResult(res);
   }
+
+  const phoneResolvedError =
+    phoneBlurred || errors.phone !== undefined
+      ? getPhoneFieldError(form.phone)
+      : undefined;
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
@@ -192,14 +209,16 @@ export function QuoteFormPage() {
       </div>
 
       {/* Phone */}
-      <FieldWrapper label="Phone Number" error={errors.phone}>
+      <FieldWrapper label="Phone Number" error={phoneResolvedError}>
         <input
           type="tel"
           value={form.phone}
           onChange={updateField("phone")}
+          onBlur={() => setPhoneBlurred(true)}
           placeholder="(555) 123-4567"
           autoComplete="tel"
-          className={inputClass(!!errors.phone) + " sm:max-w-xs"}
+          aria-invalid={phoneResolvedError ? true : undefined}
+          className={inputClass(!!phoneResolvedError) + " sm:max-w-xs"}
         />
       </FieldWrapper>
 

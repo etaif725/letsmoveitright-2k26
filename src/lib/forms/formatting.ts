@@ -3,17 +3,11 @@
  * Transform raw values into display-friendly or API-friendly formats.
  */
 
-/** Mask a phone string into (XXX) XXX-XXXX as the user types. */
-export function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
+import { formatPhoneInput } from "@/lib/phone";
 
-/** Strip a formatted phone back to raw digits. */
-export function stripPhone(formatted: string): string {
-  return formatted.replace(/\D/g, "");
+/** US national-style masking while typing (libphonenumber). */
+export function formatPhone(value: string): string {
+  return formatPhoneInput(value);
 }
 
 /** Return today as YYYY-MM-DD for the date input's `min` attr. */
