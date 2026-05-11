@@ -6,6 +6,7 @@ import { formatPhone, todayISO } from "@/lib/forms/formatting";
 import { validateStep } from "@/lib/forms/validation";
 import { submitLead } from "@/lib/forms/api";
 import { getPhoneFieldError, isValidVisitorPhone } from "@/lib/phone";
+import { trackQuoteSubmission } from "@/lib/analytics";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
 import { usePlacesAutocomplete } from "@/hooks/usePlacesAutocomplete";
 import { Stepper } from "@/components/ui/Stepper";
@@ -133,6 +134,11 @@ export function QuoteForm() {
     setSubmitting(false);
 
     if (res.ok) {
+      trackQuoteSubmission({
+        moveSize: form.moveSize,
+        pickupState: form.pickupState,
+        destState: form.destState,
+      });
       navigate("/thank-you");
       return;
     }
