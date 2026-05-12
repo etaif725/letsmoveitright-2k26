@@ -139,7 +139,9 @@ export function QuoteForm() {
         pickupState: form.pickupState,
         destState: form.destState,
       });
-      navigate("/thank-you");
+      navigate("/thank-you", {
+        state: { isDuplicate: res.isDuplicate ?? false },
+      });
       return;
     }
     setResult(res);

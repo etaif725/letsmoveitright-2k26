@@ -6,6 +6,7 @@ declare global {
 }
 
 const GADS_ID = "AW-11462476172";
+const LEADS_CONVERSION_LABEL = "35mCCLXL45MZElyD3tkq";
 
 export function trackEvent(
   eventName: string,
@@ -43,7 +44,7 @@ export function trackQuoteSubmission(formData?: {
     ...(formData?.destState && { destination_state: formData.destState }),
   });
 
-  trackConversion();
+  trackConversion(LEADS_CONVERSION_LABEL);
 }
 
 export function trackPhoneCall(): void {

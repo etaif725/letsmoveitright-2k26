@@ -5,6 +5,7 @@ import type { FormState, FormErrors, ParsedPlace } from "@/types";
 import { formatPhone, todayISO } from "@/lib/forms/formatting";
 import { validateStep } from "@/lib/forms/validation";
 import { submitLead } from "@/lib/forms/api";
+import { trackQuoteSubmission } from "@/lib/analytics";
 import { getPhoneFieldError, isValidVisitorPhone } from "@/lib/phone";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
 import { usePlacesAutocomplete } from "@/hooks/usePlacesAutocomplete";
@@ -114,7 +115,14 @@ export function QuoteFormPage() {
     setSubmitting(false);
 
     if (res.ok) {
-      navigate("/thank-you");
+      trackQuoteSubmission({
+        moveSize: form.moveSize,
+        pickupState: form.pickupState,
+        destState: form.destState,
+      });
+      navigate("/thank-you", {
+        state: { isDuplicate: res.isDuplicate ?? false },
+      });
       return;
     }
     setResult(res);

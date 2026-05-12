@@ -56,4 +56,5 @@ export interface SubmitResult {
   ok: boolean;
   msg: string;
   leadId?: string;
+  isDuplicate?: boolean;
 }

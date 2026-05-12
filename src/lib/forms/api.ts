@@ -45,6 +45,7 @@ export function buildPayload(form: FormState): LeadPayload {
  * Parse the Granot HTTP response.
  * Format: "leadid,errid,msg,sold,match"
  * errid 0 = success, anything else = error.
+ * Duplicate submissions return a non-zero errid with "DUPLICATE" in msg.
  */
 function parseResponse(raw: string): SubmitResult {
   const parts = raw.split(",");
@@ -54,6 +55,14 @@ function parseResponse(raw: string): SubmitResult {
 
   if (errid === "0") {
     return { ok: true, msg: "Quote request submitted successfully!", leadId };
+  }
+  if (msg?.toLowerCase().includes("duplicate")) {
+    return {
+      ok: true,
+      isDuplicate: true,
+      msg: "Your request has already been submitted before.",
+      leadId,
+    };
   }
   return { ok: false, msg: msg || "Submission failed. Please try again." };
 }

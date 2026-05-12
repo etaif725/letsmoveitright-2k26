@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Seo from "@/components/ui/Seo";
 import { COMPANY } from "@/data/company";
 
@@ -7,6 +7,8 @@ const REDIRECT_SECONDS = 5;
 
 export default function ThankYouPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDuplicate = (location.state as { isDuplicate?: boolean } | null)?.isDuplicate ?? false;
   const [countdown, setCountdown] = useState(REDIRECT_SECONDS);
 
   useEffect(() => {
@@ -49,8 +51,9 @@ export default function ThankYouPage() {
             Thank You!
           </h1>
           <p className="mt-4 text-lg text-body">
-            Your quote request has been received. One of our moving specialists
-            will be in touch with you shortly.
+            {isDuplicate
+              ? "Your request has already been submitted before. One of our moving specialists will be in touch with you shortly."
+              : "Your quote request has been received. One of our moving specialists will be in touch with you shortly."}
           </p>
 
           <div className="mt-8 rounded-lg bg-gray-50 p-6">
