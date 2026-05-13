@@ -1,7 +1,8 @@
-import { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { lazy, Suspense, useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import RootLayout from "@/components/layout/RootLayout";
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import { trackPageView } from "@/lib/analytics";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const AboutUsPage = lazy(() => import("@/pages/AboutUsPage"));
@@ -27,6 +28,12 @@ function LoadingFallback() {
 }
 
 export default function App() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
+
   return (
     <>
       <ScrollToTop />

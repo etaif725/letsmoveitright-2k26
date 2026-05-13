@@ -101,3 +101,10 @@ export function trackPhoneCall(): void {
     event_label: "Phone Click",
   });
 }
+
+export function trackPageView(path: string): void {
+  if (typeof window === "undefined" || !window.gtag) return;
+  window.gtag("event", "page_view", {
+    page_path: path,
+  });
+}
