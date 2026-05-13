@@ -2,10 +2,10 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import type { FormState, FormErrors, StepNumber, ParsedPlace } from "@/types";
-import { formatPhone, todayISO } from "@/lib/forms/formatting";
+import { formatPhone, todayISO, splitName } from "@/lib/forms/formatting";
 import { validateStep } from "@/lib/forms/validation";
 import { submitLead } from "@/lib/forms/api";
-import { getPhoneFieldError, isValidVisitorPhone } from "@/lib/phone";
+import { getPhoneFieldError, isValidVisitorPhone, toE164 } from "@/lib/phone";
 import { trackQuoteSubmission } from "@/lib/analytics";
 import { useGooglePlaces } from "@/hooks/useGooglePlaces";
 import { usePlacesAutocomplete } from "@/hooks/usePlacesAutocomplete";
@@ -134,10 +134,17 @@ export function QuoteForm() {
     setSubmitting(false);
 
     if (res.ok) {
+      const { first, last } = splitName(form.fullName);
       trackQuoteSubmission({
         moveSize: form.moveSize,
         pickupState: form.pickupState,
         destState: form.destState,
+        user: {
+          email: form.email,
+          phone: toE164(form.phone) ?? undefined,
+          firstName: first,
+          lastName: last,
+        },
       });
       navigate("/thank-you", {
         state: { isDuplicate: res.isDuplicate ?? false },
