@@ -148,13 +148,14 @@ app.post("/api/submit", submitLimiter, async (req, res) => {
     moveSize,
   };
 
-  sendQuoteEmail(quoteData, notificationEmails).catch((err) => {
-    console.error("Error sending quote email:", err);
-  });
-
-  sendLeadConfirmationEmail(quoteData).catch((err) => {
-    console.error("Error sending lead confirmation email:", err);
-  });
+  try {
+    await Promise.all([
+      sendQuoteEmail(quoteData, notificationEmails),
+      sendLeadConfirmationEmail(quoteData),
+    ]);
+  } catch (err) {
+    console.error("Error sending quote/lead confirmation emails:", err);
+  }
 
   res.status(200).json({ message: "Form submitted successfully" });
 });

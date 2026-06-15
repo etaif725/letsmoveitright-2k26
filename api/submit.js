@@ -128,24 +128,22 @@ export default async function handler(req, res) {
     console.log("Resend quote email sent:", data?.id);
 
     const leadEmail = buildLeadConfirmationEmail({ name });
-    resend.emails
-      .send({
-        from: FROM_EMAIL,
-        to: [email],
-        subject: leadEmail.subject,
-        html: leadEmail.html,
-        text: leadEmail.text,
-      })
-      .then(({ data: leadData, error: leadError }) => {
-        if (leadError) {
-          console.error("Resend lead confirmation error:", JSON.stringify(leadError));
-        } else {
-          console.log("Resend lead confirmation sent:", leadData?.id);
-        }
-      })
-      .catch((err) => {
-        console.error("Lead confirmation send error:", err);
-      });
+    const leadPayload = {
+      from: FROM_EMAIL,
+      to: [email],
+      subject: leadEmail.subject,
+      html: leadEmail.html,
+      text: leadEmail.text,
+    };
+    if (CC_EMAILS.length) leadPayload.cc = CC_EMAILS;
+    if (BCC_EMAILS.length) leadPayload.bcc = BCC_EMAILS;
+
+    const { data: leadData, error: leadError } = await resend.emails.send(leadPayload);
+    if (leadError) {
+      console.error("Resend lead confirmation error:", JSON.stringify(leadError));
+    } else {
+      console.log("Resend lead confirmation sent:", leadData?.id);
+    }
 
     return res.status(200).json({ message: "Form submitted successfully" });
   } catch (err) {

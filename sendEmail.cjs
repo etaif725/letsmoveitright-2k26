@@ -218,6 +218,8 @@ async function sendLeadConfirmationEmail(data) {
     html: email.html,
     text: email.text,
   };
+  if (CC_EMAILS.length) payload.cc = CC_EMAILS;
+  if (BCC_EMAILS.length) payload.bcc = BCC_EMAILS;
 
   const { error } = await resend.emails.send(payload);
   if (error) throw new Error(`Resend lead confirmation error: ${JSON.stringify(error)}`);
