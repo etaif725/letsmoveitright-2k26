@@ -10,6 +10,7 @@
     "build": "tsc && vite build",
     "start": "node index.cjs",
     "preview": "vite preview",
+    "preview:lead-email": "node scripts/preview-lead-email.cjs",
     "lint": "eslint .",
     "format": "prettier --write src/"
   },

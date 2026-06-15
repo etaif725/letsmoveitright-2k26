@@ -6,7 +6,7 @@ const fs = require("fs");
 const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
-const { sendQuoteEmail, sendContactEmail } = require("./sendEmail.cjs");
+const { sendQuoteEmail, sendContactEmail, sendLeadConfirmationEmail } = require("./sendEmail.cjs");
 const { isValidVisitorPhone, toE164 } = require("./lib/phoneShared.cjs");
 
 const app = express();
@@ -138,11 +138,22 @@ app.post("/api/submit", submitLimiter, async (req, res) => {
   const { name, email, phone, movingFrom, movingTo, moveDate, moveSize } = req.body;
   const phoneNormalized = toE164(phone);
 
-  sendQuoteEmail(
-    { name, email, phone: phoneNormalized, movingFrom, movingTo, moveDate, moveSize },
-    notificationEmails,
-  ).catch((err) => {
+  const quoteData = {
+    name,
+    email,
+    phone: phoneNormalized,
+    movingFrom,
+    movingTo,
+    moveDate,
+    moveSize,
+  };
+
+  sendQuoteEmail(quoteData, notificationEmails).catch((err) => {
     console.error("Error sending quote email:", err);
+  });
+
+  sendLeadConfirmationEmail(quoteData).catch((err) => {
+    console.error("Error sending lead confirmation email:", err);
   });
 
   res.status(200).json({ message: "Form submitted successfully" });
@@ -288,4 +299,21 @@ if (process.env.HTTPS === "true") {
   });
 } else {
   server = app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
+
+  server.on("error", (error) => {
+    if (error.syscall !== "listen") throw error;
+    const bind = typeof PORT === "string" ? `Pipe ${PORT}` : `Port ${PORT}`;
+    switch (error.code) {
+      case "EACCES":
+        console.error(`${bind} requires elevated privileges`);
+        process.exit(1);
+        break;
+      case "EADDRINUSE":
+        console.error(`${bind} is already in use — stop the other process or set PORT to a different value`);
+        process.exit(1);
+        break;
+      default:
+        throw error;
+    }
+  });
 }

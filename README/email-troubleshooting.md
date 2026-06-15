@@ -1,6 +1,11 @@
-# Lead notification emails (Resend)
+# Lead emails (Resend)
 
 Quote forms POST to `/api/submit`. On **Vercel**, that is handled by `api/submit.js`. On a **Node server** (PM2 + `index.cjs`), the same path is handled by Express and `sendEmail.cjs`.
+
+Each successful quote submission sends **two** emails:
+
+1. **Internal notification** — to `NOTIFICATIONS_EMAILS` (existing table-style email).
+2. **Lead confirmation** — to the customer who submitted the form (branded client-facing email from `lib/leadConfirmationEmail.cjs`).
 
 ## Checklist
 

@@ -4,6 +4,7 @@ import { getRequestBody } from "./_parseBody.js";
 
 const require = createRequire(import.meta.url);
 const { isValidVisitorPhone, toE164 } = require("../lib/phoneShared.cjs");
+const { buildLeadConfirmationEmail } = require("../lib/leadConfirmationEmail.cjs");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@letsmoveit-right.com";
@@ -125,6 +126,27 @@ export default async function handler(req, res) {
       });
     }
     console.log("Resend quote email sent:", data?.id);
+
+    const leadEmail = buildLeadConfirmationEmail({ name });
+    resend.emails
+      .send({
+        from: FROM_EMAIL,
+        to: [email],
+        subject: leadEmail.subject,
+        html: leadEmail.html,
+        text: leadEmail.text,
+      })
+      .then(({ data: leadData, error: leadError }) => {
+        if (leadError) {
+          console.error("Resend lead confirmation error:", JSON.stringify(leadError));
+        } else {
+          console.log("Resend lead confirmation sent:", leadData?.id);
+        }
+      })
+      .catch((err) => {
+        console.error("Lead confirmation send error:", err);
+      });
+
     return res.status(200).json({ message: "Form submitted successfully" });
   } catch (err) {
     console.error("Submit error:", err);

@@ -1,4 +1,5 @@
 const { Resend } = require("resend");
+const { buildLeadConfirmationEmail } = require("./lib/leadConfirmationEmail.cjs");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@letsmoveit-right.com";
@@ -199,4 +200,27 @@ async function sendContactEmail(data, toAddresses) {
   if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
 
-module.exports = { sendQuoteEmail, sendContactEmail };
+async function sendLeadConfirmationEmail(data) {
+  if (!data?.email) {
+    console.error("sendLeadConfirmationEmail: lead email is missing");
+    return;
+  }
+  if (!process.env.RESEND_API_KEY) {
+    console.error("sendLeadConfirmationEmail: RESEND_API_KEY is not set");
+    return;
+  }
+
+  const email = buildLeadConfirmationEmail({ name: data.name });
+  const payload = {
+    from: FROM_EMAIL,
+    to: [data.email],
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+  };
+
+  const { error } = await resend.emails.send(payload);
+  if (error) throw new Error(`Resend lead confirmation error: ${JSON.stringify(error)}`);
+}
+
+module.exports = { sendQuoteEmail, sendContactEmail, sendLeadConfirmationEmail };
